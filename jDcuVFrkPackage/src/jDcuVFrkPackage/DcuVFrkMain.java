@@ -1170,7 +1170,7 @@ public class DcuVFrkMain extends javax.swing.JFrame {
         } // else // QuietMode                        
         //-------------------------------------------------------------------------------
 
-//TBD002
+//TBD003
 // Display both the Communication Window and Progress Window
 //GlobalVars.commDataFrame.setVisible(true);
 //GlobalVars.progressFrame.setVisible(true);
