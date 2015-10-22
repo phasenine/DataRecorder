@@ -1170,7 +1170,7 @@ public class DcuVFrkMain extends javax.swing.JFrame {
         } // else // QuietMode                        
         //-------------------------------------------------------------------------------
 
-//TBD005
+//TBD
 // Display both the Communication Window and Progress Window
 //GlobalVars.commDataFrame.setVisible(true);
 //GlobalVars.progressFrame.setVisible(true);
@@ -1386,7 +1386,7 @@ public class DcuVFrkMain extends javax.swing.JFrame {
                     //                             Block85+Block86+Block87+Block88+Block89+Block90+
                     //                             Block91+Block92+Block93+Block94+Block95+Block96+
                     //                             Block204+Block205                    
-                    baselineFileBuffer = new byte[256+128+128+128+128+128+(6*14*128)+128+128];
+                    baselineFileBuffer = new byte[256+(114*128)];
                     
                     try
                     {
@@ -1411,10 +1411,10 @@ public class DcuVFrkMain extends javax.swing.JFrame {
                         // No error message.  Its not critical that we couldn't close the baseline file.  
                         // We can still complete the reprogramming without closing the file.
                     }                    
+                    
          
                     final int BASELINE_BLOCK_0_MASK = 0x01;
                     final int BASELINE_BLOCK_1_MASK = 0x02;
-//                  final int BASELINE_BLOCK_5_MASK = 0x20;
                     final int BASELINE_BLOCK_9_MASK = 0x02;
                     final int BASELINE_BLOCK_205_MASK = 0x20;
                     int baselineDataIndex = 0;
@@ -1430,66 +1430,185 @@ public class DcuVFrkMain extends javax.swing.JFrame {
                     // 3. Only step through the baseline header up to byte 25 as it contains Block #205 that we are intersted
                     //--------------------------------------------------------------------------------------------
 
-                    int headerIndex = 0;
-                    int headerBitIndex = 0;
-                    int offsetIntoBaselineFile = 0;
-/*                    
+                    // Need to run through the header
+                    // to determine what is the offset into
+                    // baselineFileBuffer to fetch Blocks
+                    // 1 and 205
+                    int numBlockOffsetTillBlk1 = 0;
+                    int numBlockOffsetTillBlk205 = 0;
+                    boolean blockOnePresent = false;
+                    boolean blockTwoHundredAndFivePresent = false;
+                    
                     for (int yy=0;yy<=25;yy++)                    
                     {
                         for (int zz=0;zz<8;zz++)                    
                         {
-                            // Sift through each bit checking if its set
-                            // If its set, increment an offset by 1
-                            if ((baselineFileBuffer[yy] & (0x1 << zz)) > 0)
-                            {
-                                offsetIntoBaselineFile += 1;    
-
-                                // The associated bit for Block #0 is in Byte #0 of header
-                                // The associated bit for Block #1 is in Byte #0 of header
-                                // The associated bit for Block #205 is in Byte #25 of header
-                                if (((yy == 0)  && (baselineFileBuffer[yy] & BASELINE_BLOCK_0_MASK)    == BASELINE_BLOCK_0_MASK) ||
-                                    ((yy == 0)  && (baselineFileBuffer[yy] & BASELINE_BLOCK_1_MASK)    == BASELINE_BLOCK_1_MASK) ||
-                                    ((yy == 25) && (baselineFileBuffer[yy] & BASELINE_BLOCK_205_MASK)  == BASELINE_BLOCK_205_MASK))
-                                {
-                                    // Create Block 0, 1 or 205 for final DCU P/N 3127069-01
-                                    tempEngineDataBlock = new tEngineDataBlock();
-
-                                    for (int aa=0;aa<128;aa+=2)                    
-                                    {
-                                        tempEngineDataBlock.data[baselineDataIndex] = (int) ((((int) baselineFileBuffer[256 + (yy*128*8) + (zz*128) + aa]) << 8) & 0xFFFF);
-                                        tempEngineDataBlock.data[baselineDataIndex++] += (int) ((int) baselineFileBuffer[256 + (yy*128*8) + (zz*128) + aa + 1] & 0xFF);
-                                    }
-
-                                    if ((yy == 0)  && ((baselineFileBuffer[yy] & BASELINE_BLOCK_0_MASK) == BASELINE_BLOCK_0_MASK))
-                                        tempEngineDataBlock.blockId = 0;
-                                    else if ((yy == 1)  && ((baselineFileBuffer[yy] & BASELINE_BLOCK_1_MASK) == BASELINE_BLOCK_1_MASK))
-                                        tempEngineDataBlock.blockId = 1;
-                                    else if ((yy == 205)  && ((baselineFileBuffer[yy] & BASELINE_BLOCK_205_MASK) == BASELINE_BLOCK_205_MASK))
-                                        tempEngineDataBlock.blockId = 205;
-                                }
-
-                                //
-                                // Clear all the byte date in Block #9
-                                // The associated bit for Block #9 is in Byte #1 of header
-                                if ((yy == 1)  && ((baselineFileBuffer[yy] & BASELINE_BLOCK_9_MASK) == BASELINE_BLOCK_9_MASK))
-                                {
-                                    // Create Block 9 for final DCU P/N 3127069-01
-                                    tempEngineDataBlock = new tEngineDataBlock();
-
-                                    Arrays.fill(tempEngineDataBlock.data, (byte) 0);                                    
-                                    tempEngineDataBlock.blockId = 9;
-                                }
-                                
-                                tempEngineDataBlock.dataIndex = 64;
-                                //---------------------------------------------------------
-                                // Adding Block 0, 1, 9 or 205 to the engineDataBlockList for upload later
-                                //---------------------------------------------------------
-                                GlobalVars.testLoginPwd.engineData.engineDataBlockList.add(tempEngineDataBlock);                                
-                            }
-                        }                                                                        
-                    }                                    
-*/
+                            // Increment offset counter if blockOnePresent is FALSE
+                            // if not, set blockOnePresent to TRUE
+                            if ((yy == 0) && (blockOnePresent == false) && (((baselineFileBuffer[yy] & (1<<zz)) == BASELINE_BLOCK_1_MASK))) 
+                                blockOnePresent = true;
+                            else if ((yy <= 0) && (blockOnePresent == false) && ((baselineFileBuffer[yy] & (1<<zz)) > 0))
+                               numBlockOffsetTillBlk1++;
+                            
+                            // Increment offset counter if blockTwoHundredAndFivePresent is FALSE
+                            // if not, set blockTwoHundredAndFivePresent to TRUE
+                            if ((yy == 25) && (blockTwoHundredAndFivePresent == false) && (((baselineFileBuffer[yy] & (1<<zz)) == BASELINE_BLOCK_205_MASK))) 
+                                blockTwoHundredAndFivePresent = true;
+                            else if ((yy <= 25) && (blockTwoHundredAndFivePresent == false) && (((baselineFileBuffer[yy] & (1<<zz)) > 0)))
+                               numBlockOffsetTillBlk205++;                    
+                        }
+                    }
                     
+
+                    //*************************************************************************                    
+                    
+                    // The associated bit for Block #1 is in Byte #0 of header
+                    if ((baselineFileBuffer[0] & BASELINE_BLOCK_0_MASK) == BASELINE_BLOCK_0_MASK)
+                    {
+                        // Create Block 0, 1 or 205 for final DCU P/N 3127069-01
+                        tempEngineDataBlock = new tEngineDataBlock();
+
+                        for (int aa=0;aa<128;aa+=2)                    
+                        {
+                            tempEngineDataBlock.data[baselineDataIndex]    = (int) ((((int) baselineFileBuffer[256 + aa]) << 8) & 0xFFFF);
+                            tempEngineDataBlock.data[baselineDataIndex++] += (int)   ((int) baselineFileBuffer[256 + aa + 1] & 0xFF);
+                        }
+                        tempEngineDataBlock.blockId = 0;
+                        tempEngineDataBlock.dataIndex = 64;
+                    }
+
+                    //---------------------------------------------------------
+                    // Adding Block 0, 1, 9 or 205 to the engineDataBlockList for upload later
+                    //---------------------------------------------------------
+                    GlobalVars.testLoginPwd.engineData.engineDataBlockList.add(tempEngineDataBlock);                                
+
+/*
+JOptionPane.showMessageDialog(null,"blockId = " + Integer.toHexString(tempEngineDataBlock.blockId) + "\n" +
+                                   "baselineFileBuffer[256+0]=" + Integer.toHexString((int) baselineFileBuffer[256+0]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toHexString((int) baselineFileBuffer[256+1]) + "\n" +
+                                   "baselineFileBuffer[256+2]=" + Integer.toHexString((int) baselineFileBuffer[256+2]) + "  " + "baselineFileBuffer[0+3]=" + Integer.toHexString((int) baselineFileBuffer[256+3]) + "\n" +
+                                   "baselineFileBuffer[256+4]=" + Integer.toHexString((int) baselineFileBuffer[256+4]) + "  " + "baselineFileBuffer[0+5]=" + Integer.toHexString((int) baselineFileBuffer[256+5]) + "\n" +
+                                   "baselineFileBuffer[256+6]=" + Integer.toHexString((int) baselineFileBuffer[256+6]) + "  " + "baselineFileBuffer[0+7]=" + Integer.toHexString((int) baselineFileBuffer[256+7]) + "\n" +
+                                   "baselineFileBuffer[256+8]=" + Integer.toHexString((int) baselineFileBuffer[256+8]) + "  " + "baselineFileBuffer[0+9]=" + Integer.toHexString((int) baselineFileBuffer[256+9]) + "\n" +
+                                   "----------------------------------------------------------------------------" + "\n" +
+                                   "baselineFileBuffer[256+118]=" + Integer.toHexString((int) baselineFileBuffer[256+118]) + "  " + "baselineFileBuffer[256+119]=" + Integer.toHexString((int) baselineFileBuffer[256+119]) + "\n" +
+                                   "baselineFileBuffer[256+120]=" + Integer.toHexString((int) baselineFileBuffer[256+120]) + "  " + "baselineFileBuffer[256+121]=" + Integer.toHexString((int) baselineFileBuffer[256+121]) + "\n" +
+                                   "baselineFileBuffer[256+122]=" + Integer.toHexString((int) baselineFileBuffer[256+122]) + "  " + "baselineFileBuffer[256+123]=" + Integer.toHexString((int) baselineFileBuffer[256+123]) + "\n" +
+                                   "baselineFileBuffer[256+124]=" + Integer.toHexString((int) baselineFileBuffer[256+124]) + "  " + "baselineFileBuffer[256+125]=" + Integer.toHexString((int) baselineFileBuffer[256+125]) + "\n" +
+                                   "baselineFileBuffer[256+126]=" + Integer.toHexString((int) baselineFileBuffer[256+126]) + "  " + "baselineFileBuffer[256+127]=" + Integer.toHexString((int) baselineFileBuffer[256+127]) + "\n" +
+                                   "----------------------------------------------------------------------------" + "\n" +
+                                   "baselineFileBuffer[256+128+0]=" + Integer.toHexString((int) baselineFileBuffer[256 + 128 + 0]) + "  " + "baselineFileBuffer[256 + 128 + 1]=" + Integer.toHexString((int) baselineFileBuffer[256+128+1]) + "\n" +
+                                   "baselineFileBuffer[256+128+2]=" + Integer.toHexString((int) baselineFileBuffer[256 + 128 + 2]) + "  " + "baselineFileBuffer[256 + 128 + 3]=" + Integer.toHexString((int) baselineFileBuffer[256+128+3]) + "\n" +
+                                   "baselineFileBuffer[256+128+4]=" + Integer.toHexString((int) baselineFileBuffer[256 + 128 + 4]) + "  " + "baselineFileBuffer[256 + 128 + 5]=" + Integer.toHexString((int) baselineFileBuffer[256+128+5]) + "\n" +
+                                   "baselineFileBuffer[256+128+6]=" + Integer.toHexString((int) baselineFileBuffer[256 + 128 + 6]) + "  " + "baselineFileBuffer[256 + 128 + 7]=" + Integer.toHexString((int) baselineFileBuffer[256+128+7]) + "\n" +
+                                   "baselineFileBuffer[256+128+8]=" + Integer.toHexString((int) baselineFileBuffer[256 + 128 + 8]) + "  " + "baselineFileBuffer[256 + 128 + 9]=" + Integer.toHexString((int) baselineFileBuffer[256+128+9]) + "\n" +
+                                   "----------------------------------------------------------------------------"
+                                   ,"DCU V FRK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
+
+                    
+JOptionPane.showMessageDialog(null,"blockId = " + Integer.toHexString(tempEngineDataBlock.blockId) + "\n" +
+                                   "data[0]=" + Integer.toHexString(tempEngineDataBlock.data[0]) + "  " + "data[1]=" + Integer.toHexString(tempEngineDataBlock.data[1]) + "\n" +
+                                   "data[2]=" + Integer.toHexString(tempEngineDataBlock.data[2]) + "  " + "data[3]=" + Integer.toHexString(tempEngineDataBlock.data[3]) + "\n" +
+                                   "data[4]=" + Integer.toHexString(tempEngineDataBlock.data[4]) + "  " + "data[5]=" + Integer.toHexString(tempEngineDataBlock.data[5]) + "\n" +
+                                   "data[6]=" + Integer.toHexString(tempEngineDataBlock.data[6]) + "  " + "data[7]=" + Integer.toHexString(tempEngineDataBlock.data[7]) + "\n" +
+                                   "data[8]=" + Integer.toHexString(tempEngineDataBlock.data[8]) + "  " + "data[9]=" + Integer.toHexString(tempEngineDataBlock.data[9])
+                                   ,"DCU V FRK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);                    
+*/                    
+                    
+                    
+                    baselineDataIndex = 0;
+                    // The associated bit for Block #1 is in Byte #0 of header
+                    if ((baselineFileBuffer[0] & BASELINE_BLOCK_1_MASK) == BASELINE_BLOCK_1_MASK)
+                    {
+                        // Create Block 0, 1 or 205 for final DCU P/N 3127069-01
+                        tempEngineDataBlock = new tEngineDataBlock();
+
+                        for (int aa=0;aa<128;aa+=2)                    
+                        {
+                            tempEngineDataBlock.data[baselineDataIndex]    = (int) ((((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk1*128) + aa]) << 8) & 0xFFFF);
+                            tempEngineDataBlock.data[baselineDataIndex++] += (int)   ((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk1*128) + aa + 1] & 0xFF);
+                        }
+                        tempEngineDataBlock.blockId = 1;
+                        tempEngineDataBlock.dataIndex = 64;
+                    }
+                                        
+                    //---------------------------------------------------------
+                    // Adding Block 0, 1, 9 or 205 to the engineDataBlockList for upload later
+                    //---------------------------------------------------------
+                    GlobalVars.testLoginPwd.engineData.engineDataBlockList.add(tempEngineDataBlock);                                
+                                        
+                    baselineDataIndex = 0;
+                    // The associated bit for Block #0 is in Byte #0 of header
+                    if ((baselineFileBuffer[1] & BASELINE_BLOCK_9_MASK) == BASELINE_BLOCK_9_MASK)
+                    {
+                        // Create Block 0, 1 or 205 for final DCU P/N 3127069-01
+                        tempEngineDataBlock = new tEngineDataBlock();
+
+                        for (int aa=0;aa<128;aa+=2)                    
+                        {
+                            tempEngineDataBlock.data[baselineDataIndex]    = 0;
+                            tempEngineDataBlock.data[baselineDataIndex++] += 0;
+                        }
+                        tempEngineDataBlock.blockId = 9;
+                        tempEngineDataBlock.dataIndex = 64;
+                    }
+
+                    //---------------------------------------------------------
+                    // Adding Block 0, 1, 9 or 205 to the engineDataBlockList for upload later
+                    //---------------------------------------------------------
+                    GlobalVars.testLoginPwd.engineData.engineDataBlockList.add(tempEngineDataBlock);                                
+
+                    
+                    baselineDataIndex = 0;
+                    // The associated bit for Block #0 is in Byte #0 of header
+                    if ((baselineFileBuffer[25] & BASELINE_BLOCK_205_MASK) == BASELINE_BLOCK_205_MASK)
+                    {
+                        // Create Block 0, 1 or 205 for final DCU P/N 3127069-01
+                        tempEngineDataBlock = new tEngineDataBlock();
+
+                        for (int aa=0;aa<128;aa+=2)                    
+                        {
+                            tempEngineDataBlock.data[baselineDataIndex]    = (int) ((((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + aa]) << 8) & 0xFFFF);
+                            tempEngineDataBlock.data[baselineDataIndex++] += (int)   ((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + aa + 1] & 0xFF);
+                        }
+                        tempEngineDataBlock.blockId = 205;
+                        tempEngineDataBlock.dataIndex = 64;
+                    }
+
+                    //---------------------------------------------------------
+                    // Adding Block 0, 1, 9 or 205 to the engineDataBlockList for upload later
+                    //---------------------------------------------------------
+                    GlobalVars.testLoginPwd.engineData.engineDataBlockList.add(tempEngineDataBlock);
+/*
+JOptionPane.showMessageDialog(null,"blockId = " + Integer.toString(tempEngineDataBlock.blockId) + "\n" +
+                                   "baselineFileBuffer[0+0]=" + Integer.toString((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + 0]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + 1]) + "\n" +
+                                   "baselineFileBuffer[0+2]=" + Integer.toString((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + 2]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + 3]) + "\n" +
+                                   "baselineFileBuffer[0+4]=" + Integer.toString((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + 4]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + 5]) + "\n" +
+                                   "baselineFileBuffer[0+6]=" + Integer.toString((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + 6]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + 7]) + "\n" +
+                                   "baselineFileBuffer[0+8]=" + Integer.toString((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + 8]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + 9]) + "\n" +
+                                   "----------------------------------------------------------------------------" + "\n" +
+                                   "baselineFileBuffer[256+128+0]=" + Integer.toString((int) baselineFileBuffer[256 + 0]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + 1]) + "\n" +
+                                   "baselineFileBuffer[256+128+2]=" + Integer.toString((int) baselineFileBuffer[256 + 2]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + 3]) + "\n" +
+                                   "baselineFileBuffer[256+128+4]=" + Integer.toString((int) baselineFileBuffer[256 + 4]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + 5]) + "\n" +
+                                   "baselineFileBuffer[256+128+6]=" + Integer.toString((int) baselineFileBuffer[256 + 6]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + 7]) + "\n" +
+                                   "baselineFileBuffer[256+128+8]=" + Integer.toString((int) baselineFileBuffer[256 + 8]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + 9]) + "\n" +
+                                   "----------------------------------------------------------------------------" + "\n" +
+                                   "baselineFileBuffer[256+0]=" + Integer.toString((int) baselineFileBuffer[256 + 0]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + 1]) + "\n" +
+                                   "baselineFileBuffer[256+2]=" + Integer.toString((int) baselineFileBuffer[256 + 2]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + 3]) + "\n" +
+                                   "baselineFileBuffer[256+4]=" + Integer.toString((int) baselineFileBuffer[256 + 4]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + 5]) + "\n" +
+                                   "baselineFileBuffer[256+6]=" + Integer.toString((int) baselineFileBuffer[256 + 6]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + 7]) + "\n" +
+                                   "baselineFileBuffer[256+8]=" + Integer.toString((int) baselineFileBuffer[256 + 8]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + 9]) + "\n" +
+                                   "----------------------------------------------------------------------------"
+                                   ,"DCU V FRK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
+
+                    
+JOptionPane.showMessageDialog(null,"blockId = " + Integer.toString(tempEngineDataBlock.blockId) + "\n" +
+                                   "data[0+0]=" + Integer.toString(tempEngineDataBlock.data[256 + (numBlockOffsetTillBlk205*128) + 0]) + "  " + "data[0+1]=" + Integer.toString(tempEngineDataBlock.data[256 + (numBlockOffsetTillBlk205*128) + 1]) + "\n" +
+                                   "data[0+2]=" + Integer.toString(tempEngineDataBlock.data[256 + (numBlockOffsetTillBlk205*128) + 2]) + "  " + "data[0+1]=" + Integer.toString(tempEngineDataBlock.data[256 + (numBlockOffsetTillBlk205*128) + 3]) + "\n" +
+                                   "data[0+4]=" + Integer.toString(tempEngineDataBlock.data[256 + (numBlockOffsetTillBlk205*128) + 4]) + "  " + "data[0+1]=" + Integer.toString(tempEngineDataBlock.data[256 + (numBlockOffsetTillBlk205*128) + 5]) + "\n" +
+                                   "data[0+6]=" + Integer.toString(tempEngineDataBlock.data[256 + (numBlockOffsetTillBlk205*128) + 6]) + "  " + "data[0+1]=" + Integer.toString(tempEngineDataBlock.data[256 + (numBlockOffsetTillBlk205*128) + 7]) + "\n" +
+                                   "data[0+8]=" + Integer.toString(tempEngineDataBlock.data[256 + (numBlockOffsetTillBlk205*128) + 8]) + "  " + "data[0+1]=" + Integer.toString(tempEngineDataBlock.data[256 + (numBlockOffsetTillBlk205*128) + 9])
+                                   ,"DCU V FRK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
+*/                    
 /*                
                     // Verify that Block 0 data exist as indicated by the Bit-Map in the header of the DCU5 baseline file
                     if ((baselineFileBuffer[0] & BASELINE_BLOCK_0_MASK) == BASELINE_BLOCK_0_MASK)
@@ -1958,6 +2077,9 @@ public class DcuVFrkMain extends javax.swing.JFrame {
         //--------------------------------------------------------------------
         if (returnVal2 == 0)
         {
+//TBD            
+JOptionPane.showMessageDialog(null,"Ready to created Final State File","DCU V FRK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
+            
             Utilities.ProgressFrameSetTxt("Creating DCU5 Final-state File...", (double) 0.01);
             returnVal2 = engineData.createDcu5FinalStateFile();        
         }
