@@ -208,7 +208,6 @@ public class TestLoginPwd extends javax.swing.JFrame {
         caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
         
 
-
         //---------------------------------------
         // Make the TDS Frame visible first
         //---------------------------------------
@@ -274,32 +273,6 @@ public class TestLoginPwd extends javax.swing.JFrame {
         //*********************************************************************
         jButton1.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         //*********************************************************************   
-
-        /*
-            new Thread(new Runnable() {
-                    public void run() {
-                        try{
-
-                            //             SwingUtilities.invokeLater(new Runnable() {
-                            //                 public void run() {
-                            //                     statusArea.append("Fetching has been started");
-                            //                 }
-                            //           });
-                            SwingUtilities.invokeAndWait(new Runnable() {
-                                public void run() {
-
-                                }
-                            });
-                        }
-                        catch (java.lang.InterruptedException ex){
-                            System.err.println(ex.getMessage());
-                        }                            
-                        catch (java.lang.reflect.InvocationTargetException ex){
-                            System.err.println(ex.getMessage());
-                        }
-                    }
-                }).start();
-        */
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox1ActionPerformed
@@ -413,7 +386,7 @@ public class TestLoginPwd extends javax.swing.JFrame {
                     {
                         // Bad.  The Engine Data Table file is not found
                         // Will have to inform the operator that the Utility Program has no choice but to shutdown
-                        JOptionPane.showMessageDialog(null,"Unable to find Engine Data Table file (62999-01.txt) for programming.\nPlease verify engine data table is located on the DVD ROM at folder /edt\nThe Utitlity Program will shutdown now.\nPlease turn off or power cycle the laptop.","DCU V FPK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(null,"Unable to find Engine Data Table file (62996-01.txt) for programming.\nPlease verify engine data table is located on the DVD ROM at folder /edt\nThe Utitlity Program will shutdown now.\nPlease turn off or power cycle the laptop.","DCU V FPK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
                         Utilities.shutdownSystem();
                     }
                 }
@@ -421,7 +394,7 @@ public class TestLoginPwd extends javax.swing.JFrame {
                 {
                     // Bad.  The Engine Data Table file is not found
                     // Will have to inform the operator that the Utility Program has no choice but to shutdown
-                    JOptionPane.showMessageDialog(null,"Unable to find Engine Data Table file (62999-01.txt) for programming.\nPlease verify engine data table is located on the DVD ROM at folder /edt\nThe Utitlity Program will shutdown now.\nPlease turn off or power cycle the laptop.","DCU V FPK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null,"Unable to find Engine Data Table file (62996-01.txt) for programming.\nPlease verify engine data table is located on the DVD ROM at folder /edt\nThe Utitlity Program will shutdown now.\nPlease turn off or power cycle the laptop.","DCU V FPK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
                     Utilities.shutdownSystem();
                 }
             }
@@ -435,7 +408,7 @@ public class TestLoginPwd extends javax.swing.JFrame {
         }
         catch (NullPointerException ex)
         {
-            JOptionPane.showMessageDialog(null,"Unable to find Engine Data Table file (62999-01.txt) for programming.\nPlease verify engine data table is located on the DVD ROM at folder /edt\nThe Utitlity Program will shutdown now.\nPlease turn off or power cycle the laptop.","DCU V FPK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null,"Unable to find Engine Data Table file (62996-01.txt) for programming.\nPlease verify engine data table is located on the DVD ROM at folder /edt\nThe Utitlity Program will shutdown now.\nPlease turn off or power cycle the laptop.","DCU V FPK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
             Utilities.shutdownSystem();
         }
                     
@@ -505,63 +478,7 @@ public class TestLoginPwd extends javax.swing.JFrame {
             // Set the block size to 128 bytes as well
             //*************************************************************************************************************************
             cmdData = new TcmdData();
-/*            
-            //---------------------------
-            // Send Maintenance Command
-            //---------------------------
-            GlobalVars.maintCommand.maintCommand(cmdData);        
 
-            //--------------------------------------
-            // Send Display Configuration command
-            //--------------------------------------
-            cmdData = new TcmdData();
-            GlobalVars.maintCommand.displayConfigure(cmdData);
-
-            //tmpReceivedBuffer = cmdData.getReceive();                
-            tmpReceivedBuffer = java.util.Arrays.copyOf(cmdData.receiveBuf, 14);
-
-
-            // DCU Address
-            offset = 3;
-            tempSysConfig.setDcuAddress((int) tmpReceivedBuffer[offset]&0xFF);
-
-            // baud rate
-            offset = 4;
-            tempSysConfig.setBaudRate((int) tmpReceivedBuffer[offset]&0xFF);
-
-            // Transmit Mode
-            offset = 5;
-            tempSysConfig.setTransmitMode((int) tmpReceivedBuffer[offset]&0xFF);
-
-            // DCU Type
-            offset = 6;
-            tempSysConfig.setCmdSet((int) tmpReceivedBuffer[offset]&0xFF);
-
-            // Block size
-            offset = 7;
-            tempSysConfig.setBlockSize((int) tmpReceivedBuffer[offset]&0xFF);
-
-            // Test Enable
-            offset = 8;
-            tempSysConfig.setTestEnable((int) tmpReceivedBuffer[offset]&0xFF);
-
-            // Spare
-            offset = 9;
-            tempSysConfig.setSpare((int) tmpReceivedBuffer[offset]&0xFF);
-
-            //----------------------------------------------------
-            // Send Reboot command to get back to Normal Mode
-            //----------------------------------------------------	
-            cmdData.clear();
-            returnVal = GlobalVars.maintCommand.reboot(cmdData);
-            cmdStatusWord = cmdData.receiveBuf[2];
-            cmdStatusWord = ((cmdStatusWord << 8) & 0xFF00) + cmdData.receiveBuf[1];
-            if ((cmdStatusWord != 0) || (returnVal != 0))
-            {
-               JOptionPane.showMessageDialog(null,"Unexpected DCU error.\nFail To Reboot DCU.  Upgrade process is discontinued.\nThe Utility Program will shutdown now.\nPlease inform your manager or supervisor of the error.","DCU V FPK" + Constants.SW_VERSION,JOptionPane.WARNING_MESSAGE);            
-               Utilities.shutdownSystem();
-            }
-*/
             // Command the DCU II to 115,200 baud
             Utilities.ProgressFrameSetTxt("Commanding DCU II device to 115,200 baud...", (double) 0.01);
             cmdData.clear();
@@ -585,74 +502,7 @@ public class TestLoginPwd extends javax.swing.JFrame {
 
             Utilities.ProgressFrameSetTxt("Readback programmed EDT blocks for verification...", (double) 1.0);
             engineData.readBack();
-            
-/*            
-            //restore GSE
-            GlobalVars.sysConfig.setCmdSet(tempSysConfig.getCmdSet());
-            // DCU Type
-            switch(tempSysConfig.getCmdSet())
-            {
-                case ((int) 0x55):
-                    GlobalVars.progressFrame.jLabel18.setText("DCU V Enhanced");
-                    break;
-                case ((int) 0xAA):
-                    GlobalVars.progressFrame.jLabel18.setText("DCU II Legacy Mode");
-                    break;
-                case ((int) 0xCC):
-                    GlobalVars.progressFrame.jLabel18.setText("DCU IV Legacy Mode");
-                    break;
-                default:
-                    GlobalVars.progressFrame.jLabel18.setText("Unknown");
-                    break;
-            }
-
-            // Restore Block Size
-            GlobalVars.sysConfig.setBlockSize(tempSysConfig.getBlockSize());
-            switch(GlobalVars.sysConfig.getBlockSize())
-            {
-            case 1:
-                GlobalVars.progressFrame.jLabel17.setText("128");
-                break;
-            case 2:
-                GlobalVars.progressFrame.jLabel17.setText("256");
-                break;
-            case 3:
-                GlobalVars.progressFrame.jLabel17.setText("512");
-                break;
-            case 4:
-                GlobalVars.progressFrame.jLabel17.setText("1024");
-                break;
-            default:
-                GlobalVars.progressFrame.jLabel17.setText("Unknown");
-                break;
-            }
-            //*************************************************************************************************************************            
-            
-
-            // Verification
-            if (GlobalVars.tdsDataFrame != null)
-            {
-                GlobalVars.tdsDataFrame.jTextField1.setText("Read back verification...\n\n");
-                GlobalVars.tdsDataFrame.jTextField1.update(GlobalVars.tdsDataFrame.jTextField1.getGraphics());                
-            }
-            
-            Utilities.ProgressFrameSetTxt("Verifying programmed EDT blocks...", (double) 1.0);
-            status = engineData.dataVerification();
-            if ( status == 0)
-            {
-                if (GlobalVars.tdsDataFrame != null)
-                {
-                    GlobalVars.tdsDataFrame.jTextField1.setText("Data upload success.\n\n");
-                    GlobalVars.tdsDataFrame.jTextField1.update(GlobalVars.tdsDataFrame.jTextField1.getGraphics());                
-                }
-            }
-            else
-            {
-                // The operator decides if he/she wants to continue
-                // That decision is made within the data verification function
-            }
-*/
-            
+                        
             // Command the DCU II to 9,600 baud
             Utilities.ProgressFrameSetTxt("Commanding DCU II device to 9,600 baud...", (double) 0.01);
             cmdData.clear();
@@ -668,10 +518,7 @@ public class TestLoginPwd extends javax.swing.JFrame {
 
             // Update Progress Window to show that we are transmitting at 9,600 baud
             GlobalVars.progressFrame.jLabel16.setText("9600");
-
-            
-            
-
+                        
             // read DCU ID and Cofiguration
             {
                 cmdData = new TcmdData();
