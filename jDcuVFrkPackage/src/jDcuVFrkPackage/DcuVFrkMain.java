@@ -1035,15 +1035,17 @@ public class DcuVFrkMain extends javax.swing.JFrame {
                         //-----------------------------------------------------------------------
                         // For openSUSE 13.2 - we need to create the folder /media for 
                         // mounting the USB drive
+             
                         //-----------------------------------------------------------------------
-                        new File("/media").mkdir();
+//TBD
+//                        new File("/media").mkdir();
                         
                         // Wait for 4 seconds for USB drive to get mounted                        
-                        try
-                        {
-                            TimeUnit.MILLISECONDS.sleep(4000);  // 3000ms delay
-                        }
-                        catch(InterruptedException ex) {}
+//                        try
+//                        {
+//                            TimeUnit.MILLISECONDS.sleep(4000);  // 3000ms delay
+//                        }
+//                        catch(InterruptedException ex) {}
                                                 
                         // Do a "force mount" on all USB devices that are 
                         // plugged into the laptop that are not mounted
@@ -1058,6 +1060,13 @@ public class DcuVFrkMain extends javax.swing.JFrame {
                             process = runtime.exec("sudo chmod 777 /run");                        
                             process = runtime.exec("sudo chmod 777 /run/lock");                        
 
+                            
+                            // Wait for 3 seconds for USB drive to get mounted                        
+                            try
+                            {
+                                TimeUnit.MILLISECONDS.sleep(3000);  // 3000ms delay
+                            }
+                            catch(InterruptedException ex) {}                            
                         }
                         catch (IOException e)
                         {

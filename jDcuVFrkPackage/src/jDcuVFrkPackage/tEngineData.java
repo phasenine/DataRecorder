@@ -1647,11 +1647,7 @@ public class tEngineData {
             // Close the file
             //--------------------------------------		   
             outFile.flush();            
-            outFile.close();
-
-//TBD            
-JOptionPane.showMessageDialog(null,"Successfully written Final Baseline File","DCU V FRK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
-            
+            outFile.close();            
         }
         catch(IOException e)
         {

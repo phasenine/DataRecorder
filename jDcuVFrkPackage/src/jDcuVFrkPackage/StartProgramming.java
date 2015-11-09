@@ -84,12 +84,10 @@ public class StartProgramming extends javax.swing.JFrame {
 
         jPanel6.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        jLabel2.setText("In quiet mode, the DCU5 baseline and final-state files will be saved in the");
+        jLabel2.setText("After the upgrade completes, the DCU5 baseline and final-state files will be");
         jLabel2.setFocusable(false);
 
-        jLabel3.setText("root directory of the connected USB drive.  Only necessary progress status");
-
-        jLabel10.setText("is provided in this mode.");
+        jLabel3.setText("saved in the root directory of the connected USB drive.");
 
         javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
         jPanel6.setLayout(jPanel6Layout);
