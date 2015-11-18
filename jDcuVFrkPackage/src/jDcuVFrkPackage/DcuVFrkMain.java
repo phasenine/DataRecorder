@@ -7,28 +7,16 @@
 package jDcuVFrkPackage;
 
 import javax.swing.JFrame;
-//import java.awt.Dimension;
-//import java.lang.String;
-
-//import java.util.Formatter;
-//import java.nio.ByteBuffer;
-
-//import gnu.io.CommPortIdentifier;
-//import gnu.io.SerialPort;
-//import gnu.io.NoSuchPortException;
-//import gnu.io.PortInUseException;
 import gnu.io.UnsupportedCommOperationException;
 
 
-//import java.io.InputStream;
-//import java.io.OutputStream;
 import java.io.IOException;
-//import java.nio.charset.Charset;
 import java.util.Arrays;
 
 //import java.awt.Component;
 import java.awt.Cursor;
-//import javax.swing.JButton;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 
 import javax.swing.text.DefaultCaret;
 import javax.swing.JOptionPane;
@@ -841,7 +829,14 @@ public class DcuVFrkMain extends javax.swing.JFrame {
         GlobalVars.startProgrammingFrame.setTitle("DCU V FRK" + Constants.SW_VERSION);
         GlobalVars.startProgrammingFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);        
         //GlobalVars.startProgrammingFrame.setBounds(0,0,850,360);
-        GlobalVars.startProgrammingFrame.setBounds(0,0,850,220);
+        
+        
+        GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        double screenWidth = gd.getDisplayMode().getWidth();
+        double screenHeight = gd.getDisplayMode().getHeight();     
+        
+        GlobalVars.startProgrammingFrame.setBounds((int)Math.floor((screenWidth-850)/2),(int)Math.floor((screenHeight-230)/2),850,230);       
+        //GlobalVars.startProgrammingFrame.setBounds(0,0,850,220);
         GlobalVars.startProgrammingFrame.setVisible(true);       
                                
         //-------------------------------------
@@ -856,7 +851,8 @@ public class DcuVFrkMain extends javax.swing.JFrame {
             Runtime runtime = null;
             Process process = null;
             runtime = Runtime.getRuntime();
-            process = runtime.exec("udisks --mount /dev/sdb1");                        
+            //process = runtime.exec("udisks --mount /dev/sdb1");                        
+            process = runtime.exec("udisks --mount /dev/sdb1");
             process = runtime.exec("sudo chmod 777 /run");                        
             process = runtime.exec("sudo chmod 777 /run/lock");                        
 
@@ -864,7 +860,6 @@ public class DcuVFrkMain extends javax.swing.JFrame {
         catch (IOException e)
         {
             JOptionPane.showMessageDialog(null,"Error trying to detect the USB drive.\nThe Utility Program will shutdown now.\nPlease remove and plugin the USB drive if it was plugged-in previously.\nThen power up the laptop again.","DCU V FRK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
-            //System.exit(0);                        
             
             Utilities.shutdownSystem();
         }        
@@ -1037,15 +1032,16 @@ public class DcuVFrkMain extends javax.swing.JFrame {
                         // mounting the USB drive
              
                         //-----------------------------------------------------------------------
-//TBD
-//                        new File("/media").mkdir();
-                        
-                        // Wait for 4 seconds for USB drive to get mounted                        
-//                        try
-//                        {
-//                            TimeUnit.MILLISECONDS.sleep(4000);  // 3000ms delay
-//                        }
-//                        catch(InterruptedException ex) {}
+
+                        ///TBD for openSUSE 13.2 
+                        ///                        new File("/media").mkdir();
+
+                        /// Wait for 4 seconds for USB drive to get mounted                        
+                        ///                        try
+                        ///                        {
+                        ///                            TimeUnit.MILLISECONDS.sleep(4000);  // 3000ms delay
+                        ///                        }
+                        ///                        catch(InterruptedException ex) {}
                                                 
                         // Do a "force mount" on all USB devices that are 
                         // plugged into the laptop that are not mounted
@@ -1124,7 +1120,7 @@ public class DcuVFrkMain extends javax.swing.JFrame {
                                 // Tell the operator that there is no USB drive detected,  
                                 // Tell the operator to remove and plug-in the USB drive again if it was plugged into the laptop
                                 // The program will be shutting down
-                                returnVal3 = JOptionPane.showConfirmDialog(null,"No USB drive is plugged into the laptop or no USB drive is detected.\nIf the USB drive is plugged into the laptop previously, please remove it and plug it into the laptop again.\nClick YES to try detecting USB drive again.\nClick NO to shutdown the Utility Program.","DCU V FRK" + Constants.SW_VERSION,JOptionPane.YES_NO_OPTION);
+                                returnVal3 = JOptionPane.showConfirmDialog(null,"No USB drive is plugged into the laptop or no USB drive is detected.\nIf the USB drive is plugged into the laptop previously, please remove it and plug it into the laptop again.\nClick YES to try detecting USB drive again.\nClick NO to shutdown the Utility Program.","DCU V FRK" + Constants.SW_VERSION,JOptionPane.YES_NO_OPTION);                                                                                      
                                 if (returnVal3 == JOptionPane.NO_OPTION)
                                 {
                                     Utilities.shutdownSystem();
@@ -1810,7 +1806,7 @@ public class DcuVFrkMain extends javax.swing.JFrame {
             GlobalVars.gElapsedTimer.cancel();
             
             Utilities.ProgressFrameSetTxt("Programming completed successfully...", (double) 0xFF);
-            JOptionPane.showMessageDialog(null,"DCU Upgrade process completed successfully.\nPlease click \"Exit Program\" button in the Progress Status window\nto shutdown the Utility Program.\nPlease power off the laptop after the program shuts down.","DCU V FRK" + Constants.SW_VERSION,JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(null,"DCU Upgrade process completed successfully.\nPlease click \"Exit Program\" button in the Progress Status window\nto shutdown the Utility Program.\nThe laptop / PC will shutdown automatically after the button is clicked.","DCU V FRK" + Constants.SW_VERSION,JOptionPane.WARNING_MESSAGE);
             GlobalVars.progressFrame.jButton1.setEnabled(true);
         }        
     }
@@ -1873,7 +1869,7 @@ public class DcuVFrkMain extends javax.swing.JFrame {
             else
             {
                 //JOptionPane.showMessageDialog(null,"Field Programming Unit not plugged into the laptop.\nIf the unit was plugged-in earlier, please remove and plug it into the laptop again.\nThe laptop will try detecting the DCU device again.\nThe Utility Program will shutdown now.","DCU V FRK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
-                JOptionPane.showMessageDialog(null,"Field Programming Unit not plugged into the laptop.\nIf the unit was plugged-in earlier, please remove and plug it into the laptop again.\nThe Utility Program will shutdown now.\nPlease power up the laptop to start the Upgrade process again.","DCU V FRK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null,"Field Reprogramming Unit not plugged into the laptop.\nIf the unit was plugged-in earlier, please remove and plug it into the laptop again.\nThe Utility Program will shutdown now.\nPlease power up the laptop to start the Upgrade process again.","DCU V FRK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
                 
                 Utilities.shutdownSystem();
             }
@@ -2045,7 +2041,7 @@ public class DcuVFrkMain extends javax.swing.JFrame {
             
             if (returnVal1 != 0)
             {
-                GlobalVars.commDataFrame.setVisible(true);
+                //GlobalVars.commDataFrame.setVisible(true);
                 keepTryingFlag = JOptionPane.showConfirmDialog(null,"Try connection to DCU again?","DCU V FRK" + Constants.SW_VERSION,JOptionPane.YES_NO_OPTION);
             }
         }

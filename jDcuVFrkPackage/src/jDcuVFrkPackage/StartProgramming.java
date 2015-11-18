@@ -6,6 +6,8 @@
 
 package jDcuVFrkPackage;
 
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import javax.swing.JFrame;
@@ -46,6 +48,7 @@ public class StartProgramming extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
 
         javax.swing.GroupLayout jFrame1Layout = new javax.swing.GroupLayout(jFrame1.getContentPane());
@@ -84,10 +87,12 @@ public class StartProgramming extends javax.swing.JFrame {
 
         jPanel6.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        jLabel2.setText("After the upgrade completes, the DCU5 baseline and final-state files will be");
+        jLabel2.setText("Click on the \"DCU Reprogramming\" button to start the DCU V upgrade process.");
         jLabel2.setFocusable(false);
 
-        jLabel3.setText("saved in the root directory of the connected USB drive.");
+        jLabel3.setText("After the upgrade completes, the DCU5 baseline and final-state files will be");
+
+        jLabel4.setText("saved in the root directory of the connected USB drive.");
 
         javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
         jPanel6.setLayout(jPanel6Layout);
@@ -96,9 +101,10 @@ public class StartProgramming extends javax.swing.JFrame {
             .addGroup(jPanel6Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jLabel10, javax.swing.GroupLayout.DEFAULT_SIZE, 450, Short.MAX_VALUE)
-                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, 450, Short.MAX_VALUE)
-                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jLabel10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel6Layout.setVerticalGroup(
@@ -108,6 +114,8 @@ public class StartProgramming extends javax.swing.JFrame {
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel4)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel10)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -162,8 +170,8 @@ public class StartProgramming extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton4)
                 .addGap(18, 18, 18)
-                .addComponent(jLabel1)
-                .addGap(311, 311, 311))
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(297, 297, 297))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -174,7 +182,7 @@ public class StartProgramming extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 192, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 202, Short.MAX_VALUE)
         );
 
         pack();
@@ -188,20 +196,25 @@ public class StartProgramming extends javax.swing.JFrame {
         // Hide the Start Programming Window
         this.setVisible(false);
 
+        GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        double screenWidth = gd.getDisplayMode().getWidth();
+        double screenHeight = gd.getDisplayMode().getHeight();     
+        
         //----------------------------------------------------
         // Set the dimensions & display the Progress Window
         //----------------------------------------------------
         if (GlobalVars.gOperationMode.equals("QuietMode") == false)
-            GlobalVars.progressFrame.setBounds((int)Math.ceil(GlobalVars.startProgrammingFrame.getBounds().getMaxX())-225,(int)Math.ceil(GlobalVars.startProgrammingFrame.getBounds().getMaxY()),580,580);            
+            //GlobalVars.progressFrame.setBounds((int)Math.ceil(GlobalVars.startProgrammingFrame.getBounds().getMaxX())-225,(int)Math.ceil(GlobalVars.startProgrammingFrame.getBounds().getMaxY()),580,580);            
+            GlobalVars.progressFrame.setBounds((int)Math.ceil((GlobalVars.startProgrammingFrame.getBounds().getMaxX()-225)/2),(int)Math.ceil(GlobalVars.startProgrammingFrame.getBounds().getMaxY()/2),580,580);            
         else
-            GlobalVars.progressFrame.setBounds((int)Math.ceil(GlobalVars.startProgrammingFrame.getBounds().getMaxX())-225,0,580,580);
-        
+            //GlobalVars.progressFrame.setBounds((int)Math.ceil(GlobalVars.startProgrammingFrame.getBounds().getMaxX())-225,0,580,580);
+            GlobalVars.progressFrame.setBounds((int)Math.ceil((screenWidth-536)/2),(int)Math.ceil((screenHeight-598)/2),580,580);        
         GlobalVars.progressFrame.setVisible(true);
 
         //-----------------------------------------------------------------------
         // Remind the operator to plug in USB drive and Serial Port adapter 
         //-----------------------------------------------------------------------
-        returnVal = JOptionPane.showConfirmDialog(null,"The Upgrade will start now.\nPlease plug in your USB drive and Serial Port adapter now if you haven't plug it into the laptop.\nPlease click YES to continue.\nClick NO to stop and terminate the Utility Program.","DCU V FPK" + Constants.SW_VERSION,JOptionPane.YES_NO_OPTION);
+        returnVal = JOptionPane.showConfirmDialog(null,"The Upgrade will start now.\nPlease plug in your USB drive and Serial Port adapter now if you haven't plug it into the laptop.\nPlease click YES to continue.\nClick NO to stop and terminate the Utility Program.","DCU V FRK" + Constants.SW_VERSION,JOptionPane.YES_NO_OPTION);
         if (returnVal == JOptionPane.NO_OPTION)
         {
             Utilities.shutdownSystem();
@@ -260,6 +273,7 @@ public class StartProgramming extends javax.swing.JFrame {
     public javax.swing.JLabel jLabel10;
     public javax.swing.JLabel jLabel2;
     public javax.swing.JLabel jLabel3;
+    public javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel6;

@@ -21,7 +21,7 @@ public class Constants {
 
     public static final String MAN_OVERRIDE_PWD = "dcuv";
     
-    public static final String SW_VERSION = " v0.1.2"; // numbers 0.1.1 or subsequent version must only be 5 chars long
+    public static final String SW_VERSION = " v2.0.0"; // numbers 2.0.0 or subsequent version must only be 5 chars long
     public static final String DCU5FILE_SW_VERSION = SW_VERSION.substring(SW_VERSION.length()-5);
     
     public static final int MAX_BLOCK_ID_NUMBER = 7692;
