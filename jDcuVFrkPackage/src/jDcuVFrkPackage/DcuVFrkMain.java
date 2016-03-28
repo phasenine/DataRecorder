@@ -770,6 +770,9 @@ public class DcuVFrkMain extends javax.swing.JFrame {
         //*********************************************************************
         jButton1.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         //*********************************************************************               
+
+        File directory1 = null;
+        File[] fList1 = null;
         
         mntmExit.setText("Exit Program");
         mntmGseConfigure.setText("GSE Configure");
@@ -846,6 +849,7 @@ public class DcuVFrkMain extends javax.swing.JFrame {
         GlobalVars.progressFrame.setTitle("DCU V FRK" + Constants.SW_VERSION);        
         GlobalVars.progressFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);        
 
+        // Mount sdb1 and check if it is a USB Drive or the DVD ROM disk partition "System Reserved"
         try
         {
             Runtime runtime = null;
@@ -854,7 +858,14 @@ public class DcuVFrkMain extends javax.swing.JFrame {
             //process = runtime.exec("udisks --mount /dev/sdb1");                        
             process = runtime.exec("udisks --mount /dev/sdb1");
             process = runtime.exec("sudo chmod 777 /run");                        
-            process = runtime.exec("sudo chmod 777 /run/lock");                        
+            process = runtime.exec("sudo chmod 777 /run/lock");
+            
+            // Wait for 8 seconds for DVDROM partition to get unmounted                        
+            try
+            {
+                TimeUnit.MILLISECONDS.sleep(8000);
+            }
+            catch(InterruptedException ex) {}            
 
         }
         catch (IOException e)
@@ -862,7 +873,71 @@ public class DcuVFrkMain extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null,"Error trying to detect the USB drive.\nThe Utility Program will shutdown now.\nPlease remove and plugin the USB drive if it was plugged-in previously.\nThen power up the laptop again.","DCU V FRK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
             
             Utilities.shutdownSystem();
-        }        
+        }
+        
+        // Check if /dev/sdb1 is a directory called "System Reserved",
+        // if yes, it is the DVDROM disk.... not what we want
+        //
+        // We have to mount /dev/sda1 instead to get the USB drive
+        directory1 = new File("/media"); // this is where all mounted USB drives show up
+
+        // get all the files from a directory
+        fList1 = directory1.listFiles();
+
+        if (fList1.length > 0)
+        {
+            if (fList1[0].isDirectory())            // fList1[0] must be the USB-drive directory
+            {
+                if (fList1[0].getName().contains("Reserved"))
+                {
+                    // Set a flag, we are in bad shape, we need to mount /dev/sda1
+                    GlobalVars.sdb1IsSystemReserved = true;                
+
+                    // The /dev/sdb1 folder is the DVDROM System Reserved partition
+                    // We have to mount /dev/sda1 to get the USB drive        
+                    try
+                    {
+                        Runtime runtime = null;
+                        Process process = null;
+                        runtime = Runtime.getRuntime();
+
+                        // First unmount the DVDROM System Reserved partition
+                        process = runtime.exec("udisks --unmount /dev/sdb1");                    
+
+                        // Wait for 4 seconds for DVDROM partition to get unmounted                        
+                        try
+                        {
+                            TimeUnit.MILLISECONDS.sleep(4000);
+                        }
+                        catch(InterruptedException ex) {}
+
+                        // Now, try to mouse the USB drive to sda1                   
+                        process = runtime.exec("udisks --mount /dev/sda1");
+                        process = runtime.exec("sudo chmod 777 /run");                        
+                        process = runtime.exec("sudo chmod 777 /run/lock");                        
+
+                        // Wait for 3 seconds for the USB drive to get mounted
+                        try
+                        {
+                            TimeUnit.MILLISECONDS.sleep(3000);
+                        }
+                        catch(InterruptedException ex) {}                    
+                    }
+                    catch (IOException e)
+                    {
+                        JOptionPane.showMessageDialog(null,"Error trying to detect the USB drive.\nThe Utility Program will shutdown now.\nPlease remove and plugin the USB drive if it was plugged-in previously.\nThen power up the laptop again.","DCU V FRK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
+
+                        Utilities.shutdownSystem();
+                    }                
+                  
+                }
+            }
+            else
+            {
+                // Set a flag, we are good to go as we found the USB drive
+                GlobalVars.sdb1IsSystemReserved = false;
+            }
+        }
     }
     
     byte[] concatenateByteArrays(byte[] a, byte[] b) {
@@ -1052,7 +1127,17 @@ public class DcuVFrkMain extends javax.swing.JFrame {
                             Runtime runtime = null;
                             Process process = null;
                             runtime = Runtime.getRuntime();
-                            process = runtime.exec("udisks --mount /dev/sdb1");                        
+                            
+                            // Check if /dev/sdb1 is the DVDROM System Reserved partition
+                            // If yes, mount /dev/sda1
+                            if (GlobalVars.sdb1IsSystemReserved == true)
+                            {
+                                process = runtime.exec("udisks --mount /dev/sda1");                        
+                            }
+                            else
+                            {
+                                process = runtime.exec("udisks --mount /dev/sdb1");                                                    
+                            }
                             process = runtime.exec("sudo chmod 777 /run");                        
                             process = runtime.exec("sudo chmod 777 /run/lock");                        
 
@@ -1087,7 +1172,16 @@ public class DcuVFrkMain extends javax.swing.JFrame {
                         {
                             if (fList1[0].isDirectory())            // fList1[0] must be the USB-drive directory
                             {
-                                GlobalVars.gDataStorageDirectory = fList1[0].getAbsolutePath();                             
+                                GlobalVars.gDataStorageDirectory = fList1[0].getAbsolutePath();
+                                
+                                // Check if fList1[0] is the "System Reserved" directory
+                                // If yes, set the Data Storage Directory to fList1[1]
+                                // Else, do nothing
+                                if (GlobalVars.gDataStorageDirectory.contains("Reserved") && fList1.length > 1)
+                                {
+                                    GlobalVars.gDataStorageDirectory = fList1[1].getAbsolutePath();
+                                }                                
+
                                 //--------------------------------------------------------------------
                                 // Verify that we can read/write to the path provided by operator
                                 //--------------------------------------------------------------------
@@ -1170,14 +1264,6 @@ public class DcuVFrkMain extends javax.swing.JFrame {
             } // while (returnVal3 == JOptionPane.YES_OPTION)            
         } // else // QuietMode                        
         //-------------------------------------------------------------------------------
-<<<<<<< HEAD
-
-//TBD
-// Display both the Communication Window and Progress Window
-//GlobalVars.commDataFrame.setVisible(true);
-//GlobalVars.progressFrame.setVisible(true);
-=======
->>>>>>> develop
         
         //========================================================
         // Connect to DCU and get its current configuration
@@ -1459,165 +1545,10 @@ public class DcuVFrkMain extends javax.swing.JFrame {
                         }
                     }
                     
-<<<<<<< HEAD
 
                     //*************************************************************************                    
                     
                     // The associated bit for Block #1 is in Byte #0 of header
-                    if ((baselineFileBuffer[0] & BASELINE_BLOCK_0_MASK) == BASELINE_BLOCK_0_MASK)
-                    {
-                        // Create Block 0, 1 or 205 for final DCU P/N 3127069-01
-                        tempEngineDataBlock = new tEngineDataBlock();
-
-                        for (int aa=0;aa<128;aa+=2)                    
-                        {
-                            tempEngineDataBlock.data[baselineDataIndex]    = (int) ((((int) baselineFileBuffer[256 + aa]) << 8) & 0xFFFF);
-                            tempEngineDataBlock.data[baselineDataIndex++] += (int)   ((int) baselineFileBuffer[256 + aa + 1] & 0xFF);
-                        }
-                        tempEngineDataBlock.blockId = 0;
-                        tempEngineDataBlock.dataIndex = 64;
-                    }
-
-                    //---------------------------------------------------------
-                    // Adding Block 0, 1, 9 or 205 to the engineDataBlockList for upload later
-                    //---------------------------------------------------------
-                    GlobalVars.testLoginPwd.engineData.engineDataBlockList.add(tempEngineDataBlock);                                
-
-/*
-JOptionPane.showMessageDialog(null,"blockId = " + Integer.toHexString(tempEngineDataBlock.blockId) + "\n" +
-                                   "baselineFileBuffer[256+0]=" + Integer.toHexString((int) baselineFileBuffer[256+0]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toHexString((int) baselineFileBuffer[256+1]) + "\n" +
-                                   "baselineFileBuffer[256+2]=" + Integer.toHexString((int) baselineFileBuffer[256+2]) + "  " + "baselineFileBuffer[0+3]=" + Integer.toHexString((int) baselineFileBuffer[256+3]) + "\n" +
-                                   "baselineFileBuffer[256+4]=" + Integer.toHexString((int) baselineFileBuffer[256+4]) + "  " + "baselineFileBuffer[0+5]=" + Integer.toHexString((int) baselineFileBuffer[256+5]) + "\n" +
-                                   "baselineFileBuffer[256+6]=" + Integer.toHexString((int) baselineFileBuffer[256+6]) + "  " + "baselineFileBuffer[0+7]=" + Integer.toHexString((int) baselineFileBuffer[256+7]) + "\n" +
-                                   "baselineFileBuffer[256+8]=" + Integer.toHexString((int) baselineFileBuffer[256+8]) + "  " + "baselineFileBuffer[0+9]=" + Integer.toHexString((int) baselineFileBuffer[256+9]) + "\n" +
-                                   "----------------------------------------------------------------------------" + "\n" +
-                                   "baselineFileBuffer[256+118]=" + Integer.toHexString((int) baselineFileBuffer[256+118]) + "  " + "baselineFileBuffer[256+119]=" + Integer.toHexString((int) baselineFileBuffer[256+119]) + "\n" +
-                                   "baselineFileBuffer[256+120]=" + Integer.toHexString((int) baselineFileBuffer[256+120]) + "  " + "baselineFileBuffer[256+121]=" + Integer.toHexString((int) baselineFileBuffer[256+121]) + "\n" +
-                                   "baselineFileBuffer[256+122]=" + Integer.toHexString((int) baselineFileBuffer[256+122]) + "  " + "baselineFileBuffer[256+123]=" + Integer.toHexString((int) baselineFileBuffer[256+123]) + "\n" +
-                                   "baselineFileBuffer[256+124]=" + Integer.toHexString((int) baselineFileBuffer[256+124]) + "  " + "baselineFileBuffer[256+125]=" + Integer.toHexString((int) baselineFileBuffer[256+125]) + "\n" +
-                                   "baselineFileBuffer[256+126]=" + Integer.toHexString((int) baselineFileBuffer[256+126]) + "  " + "baselineFileBuffer[256+127]=" + Integer.toHexString((int) baselineFileBuffer[256+127]) + "\n" +
-                                   "----------------------------------------------------------------------------" + "\n" +
-                                   "baselineFileBuffer[256+128+0]=" + Integer.toHexString((int) baselineFileBuffer[256 + 128 + 0]) + "  " + "baselineFileBuffer[256 + 128 + 1]=" + Integer.toHexString((int) baselineFileBuffer[256+128+1]) + "\n" +
-                                   "baselineFileBuffer[256+128+2]=" + Integer.toHexString((int) baselineFileBuffer[256 + 128 + 2]) + "  " + "baselineFileBuffer[256 + 128 + 3]=" + Integer.toHexString((int) baselineFileBuffer[256+128+3]) + "\n" +
-                                   "baselineFileBuffer[256+128+4]=" + Integer.toHexString((int) baselineFileBuffer[256 + 128 + 4]) + "  " + "baselineFileBuffer[256 + 128 + 5]=" + Integer.toHexString((int) baselineFileBuffer[256+128+5]) + "\n" +
-                                   "baselineFileBuffer[256+128+6]=" + Integer.toHexString((int) baselineFileBuffer[256 + 128 + 6]) + "  " + "baselineFileBuffer[256 + 128 + 7]=" + Integer.toHexString((int) baselineFileBuffer[256+128+7]) + "\n" +
-                                   "baselineFileBuffer[256+128+8]=" + Integer.toHexString((int) baselineFileBuffer[256 + 128 + 8]) + "  " + "baselineFileBuffer[256 + 128 + 9]=" + Integer.toHexString((int) baselineFileBuffer[256+128+9]) + "\n" +
-                                   "----------------------------------------------------------------------------"
-                                   ,"DCU V FRK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
-
-                    
-JOptionPane.showMessageDialog(null,"blockId = " + Integer.toHexString(tempEngineDataBlock.blockId) + "\n" +
-                                   "data[0]=" + Integer.toHexString(tempEngineDataBlock.data[0]) + "  " + "data[1]=" + Integer.toHexString(tempEngineDataBlock.data[1]) + "\n" +
-                                   "data[2]=" + Integer.toHexString(tempEngineDataBlock.data[2]) + "  " + "data[3]=" + Integer.toHexString(tempEngineDataBlock.data[3]) + "\n" +
-                                   "data[4]=" + Integer.toHexString(tempEngineDataBlock.data[4]) + "  " + "data[5]=" + Integer.toHexString(tempEngineDataBlock.data[5]) + "\n" +
-                                   "data[6]=" + Integer.toHexString(tempEngineDataBlock.data[6]) + "  " + "data[7]=" + Integer.toHexString(tempEngineDataBlock.data[7]) + "\n" +
-                                   "data[8]=" + Integer.toHexString(tempEngineDataBlock.data[8]) + "  " + "data[9]=" + Integer.toHexString(tempEngineDataBlock.data[9])
-                                   ,"DCU V FRK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);                    
-*/                    
-                    
-                    
-                    baselineDataIndex = 0;
-                    // The associated bit for Block #1 is in Byte #0 of header
-                    if ((baselineFileBuffer[0] & BASELINE_BLOCK_1_MASK) == BASELINE_BLOCK_1_MASK)
-                    {
-                        // Create Block 0, 1 or 205 for final DCU P/N 3127069-01
-                        tempEngineDataBlock = new tEngineDataBlock();
-
-                        for (int aa=0;aa<128;aa+=2)                    
-                        {
-                            tempEngineDataBlock.data[baselineDataIndex]    = (int) ((((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk1*128) + aa]) << 8) & 0xFFFF);
-                            tempEngineDataBlock.data[baselineDataIndex++] += (int)   ((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk1*128) + aa + 1] & 0xFF);
-                        }
-                        tempEngineDataBlock.blockId = 1;
-                        tempEngineDataBlock.dataIndex = 64;
-                    }
-                                        
-                    //---------------------------------------------------------
-                    // Adding Block 0, 1, 9 or 205 to the engineDataBlockList for upload later
-                    //---------------------------------------------------------
-                    GlobalVars.testLoginPwd.engineData.engineDataBlockList.add(tempEngineDataBlock);                                
-                                        
-                    baselineDataIndex = 0;
-                    // The associated bit for Block #0 is in Byte #0 of header
-                    if ((baselineFileBuffer[1] & BASELINE_BLOCK_9_MASK) == BASELINE_BLOCK_9_MASK)
-                    {
-                        // Create Block 0, 1 or 205 for final DCU P/N 3127069-01
-                        tempEngineDataBlock = new tEngineDataBlock();
-
-                        for (int aa=0;aa<128;aa+=2)                    
-                        {
-                            tempEngineDataBlock.data[baselineDataIndex]    = 0;
-                            tempEngineDataBlock.data[baselineDataIndex++] += 0;
-                        }
-                        tempEngineDataBlock.blockId = 9;
-                        tempEngineDataBlock.dataIndex = 64;
-                    }
-
-                    //---------------------------------------------------------
-                    // Adding Block 0, 1, 9 or 205 to the engineDataBlockList for upload later
-                    //---------------------------------------------------------
-                    GlobalVars.testLoginPwd.engineData.engineDataBlockList.add(tempEngineDataBlock);                                
-
-                    
-                    baselineDataIndex = 0;
-                    // The associated bit for Block #0 is in Byte #0 of header
-                    if ((baselineFileBuffer[25] & BASELINE_BLOCK_205_MASK) == BASELINE_BLOCK_205_MASK)
-                    {
-                        // Create Block 0, 1 or 205 for final DCU P/N 3127069-01
-                        tempEngineDataBlock = new tEngineDataBlock();
-
-                        for (int aa=0;aa<128;aa+=2)                    
-                        {
-                            tempEngineDataBlock.data[baselineDataIndex]    = (int) ((((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + aa]) << 8) & 0xFFFF);
-                            tempEngineDataBlock.data[baselineDataIndex++] += (int)   ((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + aa + 1] & 0xFF);
-                        }
-                        tempEngineDataBlock.blockId = 205;
-                        tempEngineDataBlock.dataIndex = 64;
-                    }
-
-                    //---------------------------------------------------------
-                    // Adding Block 0, 1, 9 or 205 to the engineDataBlockList for upload later
-                    //---------------------------------------------------------
-                    GlobalVars.testLoginPwd.engineData.engineDataBlockList.add(tempEngineDataBlock);
-/*
-JOptionPane.showMessageDialog(null,"blockId = " + Integer.toString(tempEngineDataBlock.blockId) + "\n" +
-                                   "baselineFileBuffer[0+0]=" + Integer.toString((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + 0]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + 1]) + "\n" +
-                                   "baselineFileBuffer[0+2]=" + Integer.toString((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + 2]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + 3]) + "\n" +
-                                   "baselineFileBuffer[0+4]=" + Integer.toString((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + 4]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + 5]) + "\n" +
-                                   "baselineFileBuffer[0+6]=" + Integer.toString((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + 6]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + 7]) + "\n" +
-                                   "baselineFileBuffer[0+8]=" + Integer.toString((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + 8]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + (numBlockOffsetTillBlk205*128) + 9]) + "\n" +
-                                   "----------------------------------------------------------------------------" + "\n" +
-                                   "baselineFileBuffer[256+128+0]=" + Integer.toString((int) baselineFileBuffer[256 + 0]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + 1]) + "\n" +
-                                   "baselineFileBuffer[256+128+2]=" + Integer.toString((int) baselineFileBuffer[256 + 2]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + 3]) + "\n" +
-                                   "baselineFileBuffer[256+128+4]=" + Integer.toString((int) baselineFileBuffer[256 + 4]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + 5]) + "\n" +
-                                   "baselineFileBuffer[256+128+6]=" + Integer.toString((int) baselineFileBuffer[256 + 6]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + 7]) + "\n" +
-                                   "baselineFileBuffer[256+128+8]=" + Integer.toString((int) baselineFileBuffer[256 + 8]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + 9]) + "\n" +
-                                   "----------------------------------------------------------------------------" + "\n" +
-                                   "baselineFileBuffer[256+0]=" + Integer.toString((int) baselineFileBuffer[256 + 0]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + 1]) + "\n" +
-                                   "baselineFileBuffer[256+2]=" + Integer.toString((int) baselineFileBuffer[256 + 2]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + 3]) + "\n" +
-                                   "baselineFileBuffer[256+4]=" + Integer.toString((int) baselineFileBuffer[256 + 4]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + 5]) + "\n" +
-                                   "baselineFileBuffer[256+6]=" + Integer.toString((int) baselineFileBuffer[256 + 6]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + 7]) + "\n" +
-                                   "baselineFileBuffer[256+8]=" + Integer.toString((int) baselineFileBuffer[256 + 8]) + "  " + "baselineFileBuffer[0+1]=" + Integer.toString((int) baselineFileBuffer[256 + 9]) + "\n" +
-                                   "----------------------------------------------------------------------------"
-                                   ,"DCU V FRK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
-
-                    
-JOptionPane.showMessageDialog(null,"blockId = " + Integer.toString(tempEngineDataBlock.blockId) + "\n" +
-                                   "data[0+0]=" + Integer.toString(tempEngineDataBlock.data[256 + (numBlockOffsetTillBlk205*128) + 0]) + "  " + "data[0+1]=" + Integer.toString(tempEngineDataBlock.data[256 + (numBlockOffsetTillBlk205*128) + 1]) + "\n" +
-                                   "data[0+2]=" + Integer.toString(tempEngineDataBlock.data[256 + (numBlockOffsetTillBlk205*128) + 2]) + "  " + "data[0+1]=" + Integer.toString(tempEngineDataBlock.data[256 + (numBlockOffsetTillBlk205*128) + 3]) + "\n" +
-                                   "data[0+4]=" + Integer.toString(tempEngineDataBlock.data[256 + (numBlockOffsetTillBlk205*128) + 4]) + "  " + "data[0+1]=" + Integer.toString(tempEngineDataBlock.data[256 + (numBlockOffsetTillBlk205*128) + 5]) + "\n" +
-                                   "data[0+6]=" + Integer.toString(tempEngineDataBlock.data[256 + (numBlockOffsetTillBlk205*128) + 6]) + "  " + "data[0+1]=" + Integer.toString(tempEngineDataBlock.data[256 + (numBlockOffsetTillBlk205*128) + 7]) + "\n" +
-                                   "data[0+8]=" + Integer.toString(tempEngineDataBlock.data[256 + (numBlockOffsetTillBlk205*128) + 8]) + "  " + "data[0+1]=" + Integer.toString(tempEngineDataBlock.data[256 + (numBlockOffsetTillBlk205*128) + 9])
-                                   ,"DCU V FRK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
-*/                    
-/*                
-                    // Verify that Block 0 data exist as indicated by the Bit-Map in the header of the DCU5 baseline file
-=======
-
-                    //*************************************************************************                    
-                    
-                    // The associated bit for Block #1 is in Byte #0 of header
->>>>>>> develop
                     if ((baselineFileBuffer[0] & BASELINE_BLOCK_0_MASK) == BASELINE_BLOCK_0_MASK)
                     {
                         // Create Block 0, 1 or 205 for final DCU P/N 3127069-01
@@ -1956,9 +1887,6 @@ JOptionPane.showMessageDialog(null,"blockId = " + Integer.toString(tempEngineDat
         //--------------------------------------------------------------------
         if (returnVal2 == 0)
         {
-//TBD            
-JOptionPane.showMessageDialog(null,"Ready to created Final State File","DCU V FRK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
-            
             Utilities.ProgressFrameSetTxt("Creating DCU5 Final-state File...", (double) 0.01);
             returnVal2 = engineData.createDcu5FinalStateFile();        
         }

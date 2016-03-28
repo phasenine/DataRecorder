@@ -244,7 +244,7 @@ public class Utilities {
     
     public static void shutdownSystem()
     {
-        //System.exit(0);
+//        System.exit(0);
 
         try
         {                
@@ -270,39 +270,6 @@ public class Utilities {
             JOptionPane.showMessageDialog(null,"Error trying trying to shutdown the Utility Program.\nPlease press the power button to turn off the laptop.","DCU V FRK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
             System.exit(0);                        
         }                                                
-            
-            
-/*            
-        //System.exit(0);
-//        try
-//        {                
-            Runtime runtime = Runtime.getRuntime();
-            Process process = null;
-            GlobalVars.progressFrame.setVisible(false);
-            GlobalVars.startProgrammingFrame.setVisible(false);
-//TBD            process = runtime.exec("/sbin/shutdown now");                                            
-
-            GlobalVars.startProgrammingFrame.setVisible(false);
-            GlobalVars.progressFrame.setVisible(false);
-
-            // Wait for 30 seconds for shutdown
-            try
-            {
-                TimeUnit.MILLISECONDS.sleep(30000);  // 3000ms delay
-            }
-            catch(InterruptedException ex) {}
-
-//        }
-//        
-//        catch (IOException ex)
-//        {
-//            JOptionPane.showMessageDialog(null,"Error trying trying to shutdown the Utility Program.\nPlease press the power button to turn off the laptop.","DCU V FRK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
-//            System.exit(0);                        
-//        }        
-            
-*/
-            
-            
     }
     
 }

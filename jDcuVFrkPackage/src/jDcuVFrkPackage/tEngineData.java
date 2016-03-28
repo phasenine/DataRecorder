@@ -424,7 +424,7 @@ public class tEngineData {
 
 
         //===================================================================================================
-        // Program Blocks other than 0,1,5 and 9 using Write RO Data Command in Maintenance Mode
+        // Program Blocks other than 0,1,9 and 205 using Write RO Data Command in Maintenance Mode
         //===================================================================================================
         for (tEngineDataBlock engineDataBlock : engineDataBlockList)
         {            
@@ -1647,11 +1647,7 @@ public class tEngineData {
             // Close the file
             //--------------------------------------		   
             outFile.flush();            
-            outFile.close();
-
-//TBD            
-JOptionPane.showMessageDialog(null,"Successfully written Final Baseline File","DCU V FRK" + Constants.SW_VERSION,JOptionPane.ERROR_MESSAGE);
-            
+            outFile.close();            
         }
         catch(IOException e)
         {
@@ -1926,8 +1922,8 @@ JOptionPane.showMessageDialog(null,"Successfully written Final Baseline File","D
         // Shutdown the program if it is null
         if (edtReadBackBlock205 == null)
         {
-            // Notify the operator that Engine Data Block 5 was empty
-            returnVal = JOptionPane.showConfirmDialog(null,"Engine Data Block 5 on connected DCU V device is empty.\nThe connected DCU V device is not fault-free !!!\nClick on YES to stop the Upgrade process and shutdown the Utility Program.\nClick on NO to continue with the Upgrade process.","DCU V GSE" + Constants.SW_VERSION,JOptionPane.YES_NO_OPTION);
+            // Notify the operator that Engine Data Block 205 was empty
+            returnVal = JOptionPane.showConfirmDialog(null,"Engine Data Block 205 on connected DCU V device is empty.\nThe connected DCU V device is not fault-free !!!\nClick on YES to stop the Upgrade process and shutdown the Utility Program.\nClick on NO to continue with the Upgrade process.","DCU V GSE" + Constants.SW_VERSION,JOptionPane.YES_NO_OPTION);
             if (returnVal == JOptionPane.YES_OPTION)
             {
                 Utilities.shutdownSystem();

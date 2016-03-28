@@ -84,5 +84,6 @@ public class GlobalVars {
     public static StartProgramming startProgrammingFrame = null;
     public static ManualOverridePwd manOverridePwd = null;
     public static ProgressFrame progressFrame = null;
-    
+   
+    public static boolean sdb1IsSystemReserved = false;
 }
